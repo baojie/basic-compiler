@@ -74,19 +74,19 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>BASIC 编译器 · 网页版</h1>
+        <h1>BASIC Compiler · Web</h1>
         <div className="toolbar">
           <button type="button" onClick={loadCityGame} disabled={running}>
-            加载城市管理游戏
+            Load City Game
           </button>
           <button type="button" onClick={handleRun} disabled={running}>
-            {running && !waitingForInput ? '运行中…' : '运行'}
+            {running && !waitingForInput ? 'Running...' : 'Run'}
           </button>
         </div>
       </header>
       <div className="main">
         <section className="editor-section">
-          <label>BASIC 源码</label>
+          <label>Source</label>
           <textarea
             className="editor"
             value={source}
@@ -96,7 +96,7 @@ function App() {
           />
         </section>
         <section className="output-section">
-          <label>输出</label>
+          <label>Output</label>
           <div className="output-box">
             <pre className="output-pre">
               {output.map((line, i) => (
@@ -111,11 +111,11 @@ function App() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSubmitInput()}
-                  placeholder="输入后按回车或点击提交"
+                  placeholder="Type and press Enter or click Submit"
                   autoFocus
                 />
                 <button type="button" onClick={handleSubmitInput}>
-                  提交
+                  Submit
                 </button>
               </div>
             )}
