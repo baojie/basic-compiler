@@ -170,24 +170,24 @@ function App() {
                 <span key={i}>{line}</span>
               ))}
             </pre>
-            {waitingForInput && (
-              <div className="input-row">
-                <input
-                  type="text"
-                  className="input-field"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSubmitInput()}
-                  placeholder="Type and press Enter or click Submit"
-                  autoFocus
-                />
-                <button type="button" onClick={handleSubmitInput}>
-                  Submit
-                </button>
-              </div>
-            )}
             <div ref={outputEndRef} />
           </div>
+          {waitingForInput && (
+            <div className="input-row">
+              <input
+                type="text"
+                className="input-field"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmitInput()}
+                placeholder="Type and press Enter or click Submit"
+                autoFocus
+              />
+              <button type="button" onClick={handleSubmitInput}>
+                Submit
+              </button>
+            </div>
+          )}
           {error && <div className="error">{error}</div>}
         </section>
       </div>
