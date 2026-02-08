@@ -26,6 +26,8 @@ PRINT "You entered:", X
 END
 `;
 
+type Lang = 'en' | 'zh';
+
 function App() {
   const [source, setSource] = useState(DEFAULT_SOURCE);
   const [output, setOutput] = useState<string[]>([]);
@@ -33,6 +35,7 @@ function App() {
   const [running, setRunning] = useState(false);
   const [waitingForInput, setWaitingForInput] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [lang, setLang] = useState<Lang>('en');
   const inputResolveRef = useRef<(value: string) => void>(null);
   const outputEndRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
@@ -85,14 +88,15 @@ function App() {
   }, []);
 
   const loadCityGame = async () => {
+    const file = lang === 'zh' ? 'city_game_cn.bas' : 'city_game.bas';
     try {
-      const res = await fetch(import.meta.env.BASE_URL + 'city_game.bas');
+      const res = await fetch(import.meta.env.BASE_URL + file);
       const text = await res.text();
       setSource(text);
       setError(null);
       setOutput([]);
     } catch (e) {
-      setError('Failed to load city_game.bas');
+      setError(`Failed to load ${file}`);
     }
   };
 
@@ -140,11 +144,20 @@ function App() {
           BASIC Compiler · Web
         </a>
         <div className="toolbar">
+          <button
+            type="button"
+            className="lang-toggle"
+            onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}
+          >
+            {lang === 'en' ? '中文' : 'EN'}
+          </button>
           <button type="button" onClick={loadCityGame} disabled={running}>
-            Load City Game
+            {lang === 'zh' ? '加载城市游戏' : 'Load City Game'}
           </button>
           <button type="button" onClick={handleRun} disabled={running}>
-            {running && !waitingForInput ? 'Running...' : 'Run'}
+            {running && !waitingForInput
+              ? lang === 'zh' ? '运行中...' : 'Running...'
+              : lang === 'zh' ? '运行' : 'Run'}
           </button>
         </div>
       </header>
@@ -154,7 +167,7 @@ function App() {
         style={isMobile ? undefined : { gridTemplateColumns: `${splitPercent}% 6px 1fr` }}
       >
         <section className="editor-section">
-          <label>Source</label>
+          <label>{lang === 'zh' ? '源代码' : 'Source'}</label>
           <div className="editor-wrap">
             <pre
               ref={highlightRef}
@@ -175,7 +188,7 @@ function App() {
         </section>
         <div className="divider" onMouseDown={onDividerMouseDown} />
         <section className="output-section">
-          <label>Output</label>
+          <label>{lang === 'zh' ? '输出' : 'Output'}</label>
           <div className="output-box">
             <pre className="output-pre">
               {output.map((line, i) => (
@@ -192,11 +205,11 @@ function App() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSubmitInput()}
-                placeholder="Type and press Enter or click Submit"
+                placeholder={lang === 'zh' ? '输入后按回车或点击提交' : 'Type and press Enter or click Submit'}
                 autoFocus
               />
               <button type="button" onClick={handleSubmitInput}>
-                Submit
+                {lang === 'zh' ? '提交' : 'Submit'}
               </button>
             </div>
           )}

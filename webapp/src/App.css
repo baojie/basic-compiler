@@ -54,6 +54,13 @@
   cursor: not-allowed;
 }
 
+.toolbar .lang-toggle {
+  background: transparent;
+  border-color: #7aa2f7;
+  color: #7aa2f7;
+  font-weight: 600;
+}
+
 .main {
   flex: 1;
   display: grid;
