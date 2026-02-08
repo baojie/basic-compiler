@@ -1,0 +1,161 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #1a1b26;
+  color: #c0caf5;
+}
+
+.header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #3b4261;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toolbar button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #565f89;
+  border-radius: 6px;
+  background: #24283b;
+  color: #c0caf5;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.toolbar button:hover:not(:disabled) {
+  background: #343b58;
+}
+
+.toolbar button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editor-section,
+.output-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-section label,
+.output-section label {
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+  color: #a9b1d6;
+}
+
+.editor {
+  flex: 1;
+  min-height: 320px;
+  padding: 0.75rem;
+  border: 1px solid #3b4261;
+  border-radius: 8px;
+  background: #24283b;
+  color: #c0caf5;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.editor:focus {
+  outline: none;
+  border-color: #7aa2f7;
+}
+
+.output-box {
+  flex: 1;
+  min-height: 320px;
+  border: 1px solid #3b4261;
+  border-radius: 8px;
+  background: #16161e;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.output-pre {
+  margin: 0;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.input-row {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input-field {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #565f89;
+  border-radius: 6px;
+  background: #24283b;
+  color: #c0caf5;
+  font-size: 0.9rem;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #7aa2f7;
+}
+
+.input-row button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #565f89;
+  border-radius: 6px;
+  background: #7aa2f7;
+  color: #1a1b26;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.input-row button:hover {
+  background: #89b4fa;
+}
+
+.error {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background: #f7768e22;
+  color: #f7768e;
+  font-size: 0.9rem;
+}

@@ -1,0 +1,7 @@
+REM GOSUB / RETURN - subroutine
+10 PRINT "main"
+20 GOSUB 100
+30 PRINT "back"
+40 END
+100 PRINT "sub"
+110 RETURN
