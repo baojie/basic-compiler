@@ -64,12 +64,52 @@ REM ----- Next year -----
 630 LET R = RND(10)
 635 IF R < 2 THEN LET P = P + RND(15)
 640 IF R >= 8 THEN LET P = P - 5
+642 LET Q = RND(20)
+643 IF Q = 0 THEN GOSUB 700
 645 IF P < 0 THEN LET P = 0
 650 IF H < 20 THEN PRINT "Riots! Pop -10.": LET P = P - 10
 655 IF P < 0 THEN LET P = 0
 660 IF F < P THEN PRINT "Famine! Pop -5.": LET P = P - 5
 665 IF P < 0 THEN LET P = 0
 670 RETURN
+REM ----- Earthquake -----
+700 PRINT ""
+705 PRINT "*** EARTHQUAKE! ***"
+710 LET E = RND(3) + 1
+715 IF E = 1 THEN GOSUB 750
+720 IF E = 2 THEN GOSUB 770
+725 IF E = 3 THEN GOSUB 790
+730 RETURN
+REM -- Minor quake --
+750 PRINT "A minor earthquake shakes the city."
+752 LET P = P - 5
+754 LET H = H - 5
+756 LET M = M - 30
+758 IF M < 0 THEN LET M = 0
+760 PRINT "Pop -5, Happy -5, Repair cost 30 gold."
+762 RETURN
+REM -- Major quake --
+770 PRINT "A major earthquake hits! Buildings collapse!"
+772 LET P = P - 15
+774 LET H = H - 15
+776 LET D = D - 20
+778 IF D < 0 THEN LET D = 0
+780 LET M = M - 80
+782 IF M < 0 THEN LET M = 0
+784 PRINT "Pop -15, Happy -15, Farms -20, Repair cost 80 gold."
+786 RETURN
+REM -- Devastating quake --
+790 PRINT "DEVASTATING earthquake! The city is in ruins!"
+792 LET P = P - 30
+794 LET H = H - 30
+796 LET D = D - 40
+798 IF D < 0 THEN LET D = 0
+800 LET F = F - 50
+802 IF F < 0 THEN LET F = 0
+804 LET M = M - 150
+806 IF M < 0 THEN LET M = 0
+808 PRINT "Pop -30, Happy -30, Farms -40, Food -50, Repair cost 150 gold."
+810 RETURN
 REM ----- Show status -----
 1000 PRINT "--- City Status ---"
 1005 PRINT "Gold: ", M, " Pop: ", P, " Food: ", F, " Happy: ", H
