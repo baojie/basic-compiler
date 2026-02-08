@@ -2,17 +2,10 @@
  * Tests for the city game (city_game.bas).
  * Tests each game subroutine individually and integrated game flows.
  *
- * KNOWN PARSER LIMITATION:
- * The parser only captures ONE statement after IF/THEN. In BASIC,
- * `IF cond THEN X: Y` should make both X and Y conditional. However,
- * this compiler treats Y as unconditional. This affects:
- *   - Line 310: `IF T > M THEN PRINT ...: RETURN` → RETURN always fires
- *   - Line 365: `IF M < 50 THEN PRINT ...: RETURN` → RETURN always fires
- *   - Line 415: `IF M < 80 THEN PRINT ...: RETURN` → RETURN always fires
- *   - Line 650: `IF H < 20 THEN PRINT ...: LET P = P - 10` → P -= 10 always
- *   - Line 660: `IF F < P THEN PRINT ...: LET P = P - 5` → P -= 5 always
- *
- * Tests below verify ACTUAL compiled behavior.
+ * NOTE: The game avoids multi-statement IF/THEN lines (e.g.
+ * `IF cond THEN X: Y`) because the parser only captures one statement
+ * after THEN. Error branches use GOTO to jump to the error message
+ * and RETURN. Riot/famine penalties use separate IF lines.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { run } from '../src/compiler/index';
@@ -90,11 +83,13 @@ const SUB_TAX = `
 const SUB_BUY_FOOD = `
 300 PRINT "Buy food: 1 gold = 5 food. How much gold?"
 305 INPUT T
-310 IF T > M THEN PRINT "Not enough gold!": RETURN
+310 IF T > M THEN GOTO 332
 315 IF T < 0 THEN RETURN
 320 LET M = M - T
 325 LET F = F + T * 5
 330 PRINT "Bought ", T * 5, " food."
+331 RETURN
+332 PRINT "Not enough gold!"
 335 RETURN
 `;
 
@@ -102,11 +97,13 @@ const SUB_HOUSING = `
 350 PRINT "Build housing: 50 gold -> +20 people. Build? 1=Yes 0=No"
 355 INPUT T
 360 IF T <> 1 THEN RETURN
-365 IF M < 50 THEN PRINT "Need 50 gold!": RETURN
+365 IF M < 50 THEN GOTO 387
 370 LET M = M - 50
 375 LET P = P + 20
 380 LET H = H - 5
 385 PRINT "Housing built. Pop +20, Happiness -5."
+386 RETURN
+387 PRINT "Need 50 gold!"
 390 RETURN
 `;
 
@@ -114,10 +111,12 @@ const SUB_FARM = `
 400 PRINT "Build farm: 80 gold -> +50 food/turn. Build? 1=Yes 0=No"
 405 INPUT T
 410 IF T <> 1 THEN RETURN
-415 IF M < 80 THEN PRINT "Need 80 gold!": RETURN
+415 IF M < 80 THEN GOTO 432
 420 LET M = M - 80
 425 LET D = D + 50
 430 PRINT "Farm built. +50 food each year."
+431 RETURN
+432 PRINT "Need 80 gold!"
 435 RETURN
 `;
 
@@ -134,9 +133,11 @@ const SUB_NEXT_YEAR = `
 642 LET Q = RND(20)
 643 IF Q = 0 THEN GOSUB 700
 645 IF P < 0 THEN LET P = 0
-650 IF H < 20 THEN PRINT "Riots! Pop -10.": LET P = P - 10
+650 IF H < 20 THEN PRINT "Riots! Pop -10."
+652 IF H < 20 THEN LET P = P - 10
 655 IF P < 0 THEN LET P = 0
-660 IF F < P THEN PRINT "Famine! Pop -5.": LET P = P - 5
+660 IF F < P THEN PRINT "Famine! Pop -5."
+662 IF F < P THEN LET P = P - 5
 665 IF P < 0 THEN LET P = 0
 670 RETURN
 `;
@@ -267,19 +268,17 @@ describe('City Game: tax collection (GOSUB 200)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Buy food — PARSER LIMITATION: RETURN on line 310 always fires
+// Buy food
 // ---------------------------------------------------------------------------
 
 describe('City Game: buy food (GOSUB 300)', () => {
-  it('should always return early due to unconditional RETURN on line 310', async () => {
-    // Parser limitation: "IF T > M THEN PRINT ...: RETURN"
-    // The RETURN is not conditional — it always executes after line 310.
+  it('should deduct gold and add food when valid', async () => {
     const src = makeGameTest(INIT_STATE, 300, ['M', 'F'], SUB_BUY_FOOD);
     const out = await runBasic(src, ['10']);
-    // M and F unchanged because RETURN fires before lines 320-330
-    expect(out).toContain('M=500');
-    expect(out).toContain('F=100');
-    expect(out).not.toContain('Bought ');
+    // M = 500 - 10 = 490, F = 100 + 50 = 150
+    expect(out).toContain('M=490');
+    expect(out).toContain('F=150');
+    expect(out).toContain('Bought ');
   });
 
   it('should show not enough gold message when over budget', async () => {
@@ -300,33 +299,29 @@ describe('City Game: buy food (GOSUB 300)', () => {
   it('should handle negative input by returning early at line 315', async () => {
     const src = makeGameTest(INIT_STATE, 300, ['M', 'F'], SUB_BUY_FOOD);
     const out = await runBasic(src, ['-5']);
-    // Negative triggers RETURN on line 315, but also line 310 RETURN fires first
     expect(out).toContain('M=500');
     expect(out).toContain('F=100');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Build housing — PARSER LIMITATION: RETURN on line 365 always fires
+// Build housing
 // ---------------------------------------------------------------------------
 
 describe('City Game: build housing (GOSUB 350)', () => {
-  it('should always return early due to unconditional RETURN on line 365', async () => {
-    // Parser limitation: "IF M < 50 THEN PRINT ...: RETURN"
-    // RETURN always executes, so housing is never built.
+  it('should build housing when enough gold', async () => {
     const src = makeGameTest(INIT_STATE, 350, ['M', 'P', 'H'], SUB_HOUSING);
     const out = await runBasic(src, ['1']);
-    // Values unchanged because RETURN fires at line 365 before lines 370-385
-    expect(out).toContain('M=500');
-    expect(out).toContain('P=50');
-    expect(out).toContain('H=60');
-    expect(out).not.toContain('Housing built.');
+    // M = 500 - 50 = 450, P = 50 + 20 = 70, H = 60 - 5 = 55
+    expect(out).toContain('M=450');
+    expect(out).toContain('P=70');
+    expect(out).toContain('H=55');
+    expect(out).toContain('Housing built.');
   });
 
   it('should cancel when user says no', async () => {
     const src = makeGameTest(INIT_STATE, 350, ['M', 'P', 'H'], SUB_HOUSING);
     const out = await runBasic(src, ['0']);
-    // T <> 1, so RETURN fires at line 360
     expect(out).toContain('M=500');
     expect(out).toContain('P=50');
     expect(out).toContain('H=60');
@@ -350,18 +345,17 @@ describe('City Game: build housing (GOSUB 350)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Build farm — PARSER LIMITATION: RETURN on line 415 always fires
+// Build farm
 // ---------------------------------------------------------------------------
 
 describe('City Game: build farm (GOSUB 400)', () => {
-  it('should always return early due to unconditional RETURN on line 415', async () => {
-    // Parser limitation: "IF M < 80 THEN PRINT ...: RETURN"
-    // RETURN always executes, so farm is never built.
+  it('should build farm when enough gold', async () => {
     const src = makeGameTest(INIT_STATE, 400, ['M', 'D'], SUB_FARM);
     const out = await runBasic(src, ['1']);
-    expect(out).toContain('M=500');
-    expect(out).toContain('D=0');
-    expect(out).not.toContain('Farm built.');
+    // M = 500 - 80 = 420, D = 0 + 50 = 50
+    expect(out).toContain('M=420');
+    expect(out).toContain('D=50');
+    expect(out).toContain('Farm built.');
   });
 
   it('should cancel when user says no', async () => {
@@ -390,8 +384,6 @@ describe('City Game: build farm (GOSUB 400)', () => {
 
 // ---------------------------------------------------------------------------
 // Next year processing
-// NOTE: Lines 650 and 660 have unconditional LET statements due to
-// parser limitation. P -= 10 (line 650) and P -= 5 (line 660) always run.
 // ---------------------------------------------------------------------------
 
 describe('City Game: next year (GOSUB 600)', () => {
@@ -445,46 +437,38 @@ describe('City Game: next year (GOSUB 600)', () => {
     expect(out).toContain('H=100');
   });
 
-  it('should always reduce pop by 10 and 5 due to unconditional LET on lines 650/660', async () => {
-    // Parser limitation: LET P = P - 10 (line 650) and LET P = P - 5 (line 660)
-    // are separate statements that always execute regardless of IF conditions.
-    // With H=60 (no riots condition) and sufficient food (no famine condition),
-    // pop still decreases by 15.
+  it('should not reduce pop when no riots or famine', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const setup = `LET M = 500\nLET P = 50\nLET F = 200\nLET H = 60\nLET Y = 1\nLET D = 100`;
     const src = makeGameTest(setup, 600, ['P'], SUB_NEXT_YEAR + SUB_EARTHQUAKE_ALL);
     const out = await runBasic(src);
     // F = 200 - 50 + 100 = 250. H = 62. R=5, no random pop change. Q=10, no quake.
-    // Line 650: P = 50 - 10 = 40 (unconditional). Line 660: P = 40 - 5 = 35 (unconditional).
-    expect(out).toContain('P=35');
-    // No riots or famine messages since conditions are false
+    // H(62) >= 20, no riots. F(250) >= P(50), no famine. Pop unchanged.
+    expect(out).toContain('P=50');
     expect(out).not.toContain('Riots!');
     expect(out).not.toContain('Famine!');
   });
 
-  it('should print riots message when happiness below 20', async () => {
+  it('should print riots message and reduce pop when happiness below 20', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const setup = `LET M = 500\nLET P = 50\nLET F = 200\nLET H = 10\nLET Y = 1\nLET D = 0`;
     const src = makeGameTest(setup, 600, ['P'], SUB_NEXT_YEAR + SUB_EARTHQUAKE_ALL);
     const out = await runBasic(src);
-    // H = 10 + 2 = 12 < 20 → riots message prints
+    // H = 10 + 2 = 12 < 20 → riots: P = 50 - 10 = 40
+    // F = 200 - 50 = 150. F(150) >= P(40), no famine.
     expect(out).toContain('Riots! Pop -10.');
-    // P = 50 - 10 = 40 (line 650, always runs)
-    // F = 200 - 50 = 150. F(150) < P(40)? No. But LET P = P - 5 still runs.
-    // P = 40 - 5 = 35
-    expect(out).toContain('P=35');
+    expect(out).toContain('P=40');
   });
 
-  it('should print famine message when food less than population', async () => {
+  it('should print famine message and reduce pop when food less than population', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const setup = `LET M = 500\nLET P = 80\nLET F = 50\nLET H = 60\nLET Y = 1\nLET D = 0`;
     const src = makeGameTest(setup, 600, ['P', 'F'], SUB_NEXT_YEAR + SUB_EARTHQUAKE_ALL);
     const out = await runBasic(src);
-    // F = 50 - 80 → clamped to 0, + 0 = 0.  H = 62.
-    // Line 650: P = 80 - 10 = 70 (always runs). H(62) >= 20, no riots message.
-    // Line 660: F(0) < P(70) → famine message. P = 70 - 5 = 65 (always runs).
+    // F = 50 - 80 → clamped to 0, + 0 = 0. H = 62. No riots.
+    // F(0) < P(80) → famine: P = 80 - 5 = 75
     expect(out).toContain('Famine! Pop -5.');
-    expect(out).toContain('P=65');
+    expect(out).toContain('P=75');
     expect(out).toContain('F=0');
   });
 
@@ -494,10 +478,9 @@ describe('City Game: next year (GOSUB 600)', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.1);
     const src = makeGameTest(INIT_STATE, 600, ['P'], SUB_NEXT_YEAR + SUB_EARTHQUAKE_ALL);
     const out = await runBasic(src);
-    // P = 50 + 1 = 51. F = 100 - 50 = 50.
-    // Line 650: P = 51 - 10 = 41 (always). H = 62, no riots msg.
-    // Line 660: F(50) < P(41)? No. P = 41 - 5 = 36 (always).
-    expect(out).toContain('P=36');
+    // P = 50 + 1 = 51. F = 100 - 50 = 50. H = 62, no riots.
+    // F(50) < P(51) → famine: P = 51 - 5 = 46
+    expect(out).toContain('P=46');
   });
 
   it('should lose population when R >= 8', async () => {
@@ -508,8 +491,8 @@ describe('City Game: next year (GOSUB 600)', () => {
     const src = makeGameTest(setup, 600, ['P'], SUB_NEXT_YEAR + SUB_EARTHQUAKE_ALL);
     const out = await runBasic(src);
     // P = 50 - 5 = 45 (R >= 8). F = 200 - 50 + 100 = 250. H = 62.
-    // Line 650: P = 45 - 10 = 35 (always). Line 660: F(250) < P(35)? No. P = 35 - 5 = 30 (always).
-    expect(out).toContain('P=30');
+    // No riots. F(250) >= P(45), no famine.
+    expect(out).toContain('P=45');
   });
 
   it('should clamp population to 0 on massive loss', async () => {
@@ -517,8 +500,8 @@ describe('City Game: next year (GOSUB 600)', () => {
     const setup = `LET M = 500\nLET P = 3\nLET F = 0\nLET H = 5\nLET Y = 1\nLET D = 0`;
     const src = makeGameTest(setup, 600, ['P'], SUB_NEXT_YEAR + SUB_EARTHQUAKE_ALL);
     const out = await runBasic(src);
-    // H = 7 < 20 → riots msg. P = 3 - 10 = -7 → clamped to 0 (line 655).
-    // F(0) < P(0)? No. P = 0 - 5 = -5 → clamped to 0 (line 665).
+    // H = 7 < 20 → riots: P = 3 - 10 = -7 → clamped to 0.
+    // F(0) < P(0)? No. Pop stays 0.
     expect(out).toContain('P=0');
   });
 });
@@ -560,30 +543,36 @@ const FULL_GAME = `
 
 300 PRINT "Buy food: 1 gold = 5 food. How much gold?"
 305 INPUT T
-310 IF T > M THEN PRINT "Not enough gold!": RETURN
+310 IF T > M THEN GOTO 332
 315 IF T < 0 THEN RETURN
 320 LET M = M - T
 325 LET F = F + T * 5
 330 PRINT "Bought ", T * 5, " food."
+331 RETURN
+332 PRINT "Not enough gold!"
 335 RETURN
 
 350 PRINT "Build housing: 50 gold -> +20 people. Build? 1=Yes 0=No"
 355 INPUT T
 360 IF T <> 1 THEN RETURN
-365 IF M < 50 THEN PRINT "Need 50 gold!": RETURN
+365 IF M < 50 THEN GOTO 387
 370 LET M = M - 50
 375 LET P = P + 20
 380 LET H = H - 5
 385 PRINT "Housing built. Pop +20, Happiness -5."
+386 RETURN
+387 PRINT "Need 50 gold!"
 390 RETURN
 
 400 PRINT "Build farm: 80 gold -> +50 food/turn. Build? 1=Yes 0=No"
 405 INPUT T
 410 IF T <> 1 THEN RETURN
-415 IF M < 80 THEN PRINT "Need 80 gold!": RETURN
+415 IF M < 80 THEN GOTO 432
 420 LET M = M - 80
 425 LET D = D + 50
 430 PRINT "Farm built. +50 food each year."
+431 RETURN
+432 PRINT "Need 80 gold!"
 435 RETURN
 
 500 PRINT ""
@@ -605,9 +594,11 @@ const FULL_GAME = `
 642 LET Q = RND(20)
 643 IF Q = 0 THEN GOSUB 700
 645 IF P < 0 THEN LET P = 0
-650 IF H < 20 THEN PRINT "Riots! Pop -10.": LET P = P - 10
+650 IF H < 20 THEN PRINT "Riots! Pop -10."
+652 IF H < 20 THEN LET P = P - 10
 655 IF P < 0 THEN LET P = 0
-660 IF F < P THEN PRINT "Famine! Pop -5.": LET P = P - 5
+660 IF F < P THEN PRINT "Famine! Pop -5."
+662 IF F < P THEN LET P = P - 5
 665 IF P < 0 THEN LET P = 0
 670 RETURN
 
@@ -682,31 +673,28 @@ describe('City Game: full game flow', () => {
     expect(out).toContain('Goodbye, Mayor!');
   });
 
-  it('should attempt buy food (returns early due to parser limitation) then quit', async () => {
+  it('should buy food then quit', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     // 2 = buy food, 20 = gold amount, 6 = quit
     const out = await runBasic(FULL_GAME, ['2', '20', '6']);
     expect(out).toContain('Buy food: 1 gold = 5 food. How much gold?');
-    // Due to parser limitation, RETURN on line 310 always fires
-    expect(out).not.toContain('Bought ');
+    expect(out).toContain('Bought ');
     expect(out).toContain('Goodbye, Mayor!');
   });
 
-  it('should attempt housing (returns early due to parser limitation) then quit', async () => {
+  it('should build housing then quit', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const out = await runBasic(FULL_GAME, ['3', '1', '6']);
     expect(out).toContain('Build housing:');
-    // RETURN on line 365 always fires
-    expect(out).not.toContain('Housing built.');
+    expect(out).toContain('Housing built.');
     expect(out).toContain('Goodbye, Mayor!');
   });
 
-  it('should attempt farm (returns early due to parser limitation) then quit', async () => {
+  it('should build farm then quit', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const out = await runBasic(FULL_GAME, ['4', '1', '6']);
     expect(out).toContain('Build farm:');
-    // RETURN on line 415 always fires
-    expect(out).not.toContain('Farm built.');
+    expect(out).toContain('Farm built.');
     expect(out).toContain('Goodbye, Mayor!');
   });
 

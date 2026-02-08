@@ -31,11 +31,13 @@ REM ----- 购买粮食 -----
 
 300 PRINT "购买粮食: 1金币 = 5粮食。花多少金币?"
 305   INPUT T
-310   IF T > M THEN PRINT "金币不足!": RETURN
+310   IF T > M THEN GOTO 332
 315   IF T < 0 THEN RETURN
 320   LET M = M - T
 325   LET F = F + T * 5
 330   PRINT "购入 ", T * 5, " 粮食。"
+331   RETURN
+332   PRINT "金币不足!"
 335 RETURN
 
 REM ----- 建造房屋 -----
@@ -43,11 +45,13 @@ REM ----- 建造房屋 -----
 350 PRINT "建造房屋: 50金币 -> +20人口。建造? 1=是 0=否"
 355   INPUT T
 360   IF T <> 1 THEN RETURN
-365   IF M < 50 THEN PRINT "需要50金币!": RETURN
+365   IF M < 50 THEN GOTO 387
 370   LET M = M - 50
 375   LET P = P + 20
 380   LET H = H - 5
 385   PRINT "房屋建成。人口+20, 幸福-5。"
+386   RETURN
+387   PRINT "需要50金币!"
 390 RETURN
 
 REM ----- 建造农场 -----
@@ -55,10 +59,12 @@ REM ----- 建造农场 -----
 400 PRINT "建造农场: 80金币 -> 每年+50粮食。建造? 1=是 0=否"
 405   INPUT T
 410   IF T <> 1 THEN RETURN
-415   IF M < 80 THEN PRINT "需要80金币!": RETURN
+415   IF M < 80 THEN GOTO 432
 420   LET M = M - 80
 425   LET D = D + 50
 430   PRINT "农场建成。每年+50粮食。"
+431   RETURN
+432   PRINT "需要80金币!"
 435 RETURN
 
 REM ----- 显示菜单 -----
@@ -87,9 +93,11 @@ REM ----- 进入下一年 -----
 643   IF Q = 0 THEN GOSUB 700
 
 645   IF P < 0 THEN LET P = 0
-650   IF H < 20 THEN PRINT "暴动! 人口-10。": LET P = P - 10
+650   IF H < 20 THEN PRINT "暴动! 人口-10。"
+652   IF H < 20 THEN LET P = P - 10
 655   IF P < 0 THEN LET P = 0
-660   IF F < P THEN PRINT "饥荒! 人口-5。": LET P = P - 5
+660   IF F < P THEN PRINT "饥荒! 人口-5。"
+662   IF F < P THEN LET P = P - 5
 665   IF P < 0 THEN LET P = 0
 670 RETURN
 

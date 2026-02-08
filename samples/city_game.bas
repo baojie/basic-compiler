@@ -31,11 +31,13 @@ REM ----- Buy food -----
 
 300 PRINT "Buy food: 1 gold = 5 food. How much gold?"
 305   INPUT T
-310   IF T > M THEN PRINT "Not enough gold!": RETURN
+310   IF T > M THEN GOTO 332
 315   IF T < 0 THEN RETURN
 320   LET M = M - T
 325   LET F = F + T * 5
 330   PRINT "Bought ", T * 5, " food."
+331   RETURN
+332   PRINT "Not enough gold!"
 335 RETURN
 
 REM ----- Build housing -----
@@ -43,11 +45,13 @@ REM ----- Build housing -----
 350 PRINT "Build housing: 50 gold -> +20 people. Build? 1=Yes 0=No"
 355   INPUT T
 360   IF T <> 1 THEN RETURN
-365   IF M < 50 THEN PRINT "Need 50 gold!": RETURN
+365   IF M < 50 THEN GOTO 387
 370   LET M = M - 50
 375   LET P = P + 20
 380   LET H = H - 5
 385   PRINT "Housing built. Pop +20, Happiness -5."
+386   RETURN
+387   PRINT "Need 50 gold!"
 390 RETURN
 
 REM ----- Build farm -----
@@ -55,10 +59,12 @@ REM ----- Build farm -----
 400 PRINT "Build farm: 80 gold -> +50 food/turn. Build? 1=Yes 0=No"
 405   INPUT T
 410   IF T <> 1 THEN RETURN
-415   IF M < 80 THEN PRINT "Need 80 gold!": RETURN
+415   IF M < 80 THEN GOTO 432
 420   LET M = M - 80
 425   LET D = D + 50
 430   PRINT "Farm built. +50 food each year."
+431   RETURN
+432   PRINT "Need 80 gold!"
 435 RETURN
 
 REM ----- Show menu -----
@@ -87,9 +93,11 @@ REM ----- Next year -----
 643   IF Q = 0 THEN GOSUB 700
 
 645   IF P < 0 THEN LET P = 0
-650   IF H < 20 THEN PRINT "Riots! Pop -10.": LET P = P - 10
+650   IF H < 20 THEN PRINT "Riots! Pop -10."
+652   IF H < 20 THEN LET P = P - 10
 655   IF P < 0 THEN LET P = 0
-660   IF F < P THEN PRINT "Famine! Pop -5.": LET P = P - 5
+660   IF F < P THEN PRINT "Famine! Pop -5."
+662   IF F < P THEN LET P = P - 5
 665   IF P < 0 THEN LET P = 0
 670 RETURN
 
