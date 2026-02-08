@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { run, LexerError, ParseError } from './compiler';
+import { highlightBasic } from './highlight';
 import './App.css';
 
 const DEFAULT_SOURCE = `REM === BASIC Compiler - Quick Start ===
@@ -34,10 +35,44 @@ function App() {
   const [inputValue, setInputValue] = useState('');
   const inputResolveRef = useRef<(value: string) => void>(null);
   const outputEndRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const [splitPercent, setSplitPercent] = useState(50);
+  const draggingRef = useRef(false);
+
+  const syncScroll = useCallback(() => {
+    if (editorRef.current && highlightRef.current) {
+      highlightRef.current.scrollTop = editorRef.current.scrollTop;
+      highlightRef.current.scrollLeft = editorRef.current.scrollLeft;
+    }
+  }, []);
 
   useEffect(() => {
     outputEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [output, waitingForInput]);
+
+  const onDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    const onMove = (ev: MouseEvent) => {
+      if (!draggingRef.current || !mainRef.current) return;
+      const rect = mainRef.current.getBoundingClientRect();
+      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      setSplitPercent(Math.min(80, Math.max(20, pct)));
+    };
+    const onUp = () => {
+      draggingRef.current = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, []);
 
   const loadCityGame = async () => {
     try {
@@ -101,17 +136,32 @@ function App() {
           </button>
         </div>
       </header>
-      <div className="main">
+      <div
+        className="main"
+        ref={mainRef}
+        style={{ gridTemplateColumns: `${splitPercent}% 6px 1fr` }}
+      >
         <section className="editor-section">
           <label>Source</label>
-          <textarea
-            className="editor"
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            spellCheck={false}
-            disabled={running}
-          />
+          <div className="editor-wrap">
+            <pre
+              ref={highlightRef}
+              className="editor-highlight"
+              aria-hidden="true"
+              dangerouslySetInnerHTML={{ __html: highlightBasic(source) + '\n' }}
+            />
+            <textarea
+              ref={editorRef}
+              className="editor"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              onScroll={syncScroll}
+              spellCheck={false}
+              disabled={running}
+            />
+          </div>
         </section>
+        <div className="divider" onMouseDown={onDividerMouseDown} />
         <section className="output-section">
           <label>Output</label>
           <div className="output-box">
