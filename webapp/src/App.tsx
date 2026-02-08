@@ -40,12 +40,19 @@ function App() {
   const mainRef = useRef<HTMLDivElement>(null);
   const [splitPercent, setSplitPercent] = useState(50);
   const draggingRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const syncScroll = useCallback(() => {
     if (editorRef.current && highlightRef.current) {
       highlightRef.current.scrollTop = editorRef.current.scrollTop;
       highlightRef.current.scrollLeft = editorRef.current.scrollLeft;
     }
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -126,7 +133,9 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>BASIC Compiler · Web</h1>
+        <a href="https://github.com/baojie/basic-compiler" target="_blank" rel="noopener noreferrer" className="header-link">
+          BASIC Compiler · Web
+        </a>
         <div className="toolbar">
           <button type="button" onClick={loadCityGame} disabled={running}>
             Load City Game
@@ -139,7 +148,7 @@ function App() {
       <div
         className="main"
         ref={mainRef}
-        style={{ gridTemplateColumns: `${splitPercent}% 6px 1fr` }}
+        style={isMobile ? undefined : { gridTemplateColumns: `${splitPercent}% 6px 1fr` }}
       >
         <section className="editor-section">
           <label>Source</label>
