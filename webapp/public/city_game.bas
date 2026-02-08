@@ -4,17 +4,19 @@ REM   Money(M) Pop(P) Food(F) Happy(H) Year(Y) Farms(D)
 REM ============================================
 
 10 GOSUB 1100
+12 GOSUB 1200
 15 GOSUB 1000
 
 REM ----- Main turn loop -----
 
 20 GOSUB 500
-25 IF C = 6 THEN GOTO 900
+25 IF C = 7 THEN GOTO 900
 30 IF C = 1 THEN GOSUB 200
 40 IF C = 2 THEN GOSUB 300
 50 IF C = 3 THEN GOSUB 350
 60 IF C = 4 THEN GOSUB 400
 70 IF C = 5 THEN GOSUB 600
+75 IF C = 6 THEN GOSUB 1200
 85 GOTO 20
 
 REM ----- Collect tax -----
@@ -64,7 +66,7 @@ REM ----- Show menu -----
 500 PRINT ""
 505   PRINT "=== Year ", Y, " ==="
 510   GOSUB 1000
-515   PRINT "1=Tax 2=Buy food 3=Housing 4=Farm 5=Next year 6=Quit"
+515   PRINT "1=Tax 2=Buy food 3=Housing 4=Farm 5=Next year 6=Help 7=Quit"
 520   INPUT C
 525 RETURN
 
@@ -152,6 +154,33 @@ REM ----- Init -----
 1120   LET Y = 1
 1125   LET D = 0
 1130 RETURN
+
+REM ----- Welcome / Help -----
+
+1200 PRINT ""
+1205   PRINT "========================================="
+1210   PRINT "  Welcome, Mayor! You run a small city."
+1215   PRINT "========================================="
+1220   PRINT ""
+1225   PRINT "GOAL: Keep your citizens alive and happy."
+1230   PRINT ""
+1235   PRINT "Each turn, pick an action:"
+1240   PRINT "  1 Tax     - Collect 2 gold per citizen"
+1245   PRINT "  2 Buy food- Spend gold to buy food (1g = 5 food)"
+1250   PRINT "  3 Housing - 50 gold -> +20 people, -5 happy"
+1255   PRINT "  4 Farm    - 80 gold -> +50 food produced each year"
+1260   PRINT "  5 Next yr - Advance to next year"
+1265   PRINT "  6 Help    - Show this guide again"
+1270   PRINT "  7 Quit    - End the game"
+1275   PRINT ""
+1280   PRINT "TIPS:"
+1285   PRINT "  - Each year, your people eat 1 food each"
+1290   PRINT "  - Build farms so food grows automatically"
+1295   PRINT "  - Keep happiness >= 20 or riots break out!"
+1300   PRINT "  - If food < population, famine strikes"
+1305   PRINT "  - Earthquakes may hit randomly each year"
+1310   PRINT ""
+1315 RETURN
 
 REM ----- End game -----
 
