@@ -2,9 +2,26 @@ import { useState, useRef, useEffect } from 'react';
 import { run, LexerError, ParseError } from './compiler';
 import './App.css';
 
-const DEFAULT_SOURCE = `REM Load "City Game" from the dropdown and click Run
-PRINT "BASIC Compiler - Web"
-PRINT "Load city_game.bas and click Run to play."
+const DEFAULT_SOURCE = `REM === BASIC Compiler - Quick Start ===
+REM
+REM 1. Edit code here, click [Run] to execute
+REM 2. Click [Load City Game] to try a demo
+REM
+REM --- Language Examples ---
+
+PRINT "Hello, World!"
+
+LET A = 3
+LET B = 4
+PRINT "3 + 4 =", A + B
+
+FOR I = 1 TO 5
+  PRINT "count:", I
+NEXT I
+
+INPUT X
+PRINT "You entered:", X
+
 END
 `;
 
