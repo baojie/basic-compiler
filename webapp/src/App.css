@@ -65,11 +65,11 @@
 
 @media (max-width: 768px) {
   .main {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 2fr;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr 2fr !important;
   }
   .divider {
-    display: none;
+    display: none !important;
   }
 }
 

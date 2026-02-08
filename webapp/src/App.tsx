@@ -40,7 +40,9 @@ function App() {
   const mainRef = useRef<HTMLDivElement>(null);
   const [splitPercent, setSplitPercent] = useState(50);
   const draggingRef = useRef(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(
+    () => window.matchMedia('(max-width: 768px)').matches,
+  );
 
   const syncScroll = useCallback(() => {
     if (editorRef.current && highlightRef.current) {
@@ -50,9 +52,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const mql = window.matchMedia('(max-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
   }, []);
 
   useEffect(() => {
